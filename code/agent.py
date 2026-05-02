@@ -7,9 +7,7 @@ import re
 import time
 import sys
 
-from langchain_groq import ChatGroq
-
-from config import GROQ_MODEL, GROQ_TEMPERATURE
+from llm_provider import LLMProvider
 from prompts import COMPANY_DETECTION_PROMPT, TRIAGE_PROMPT
 from retriever import CorpusRetriever
 
@@ -19,14 +17,9 @@ class TriageAgent:
     VALID_STATUSES = {"replied", "escalated"}
     VALID_REQUEST_TYPES = {"product_issue", "feature_request", "bug", "invalid"}
 
-    def __init__(self, retriever: CorpusRetriever, groq_api_key: str):
+    def __init__(self, retriever: CorpusRetriever, llm_provider: LLMProvider):
         self.retriever = retriever
-        self.llm = ChatGroq(
-            model=GROQ_MODEL,
-            temperature=GROQ_TEMPERATURE,
-            api_key=groq_api_key,
-            max_retries=3,
-        )
+        self.llm = llm_provider
 
     # ── Deterministic Pre-LLM Escalation Gate ────────────────────────────
 
@@ -51,8 +44,11 @@ class TriageAgent:
             "User is demanding a financial refund — requires human agent action.",
         ),
         # C. Action against a third party (ban, force, sue, report)
+        # NOTE: "remove...them" must NOT match when referring to own employee
         (
-            r"\b(ban|block|remove|force|sue|report).{0,30}(seller|merchant|company|vendor|them)\b",
+            r"\b(ban|block|force|sue).{0,30}(seller|merchant|company|vendor|them)\b"
+            r"|"
+            r"\b(remove|report).{0,30}(seller|merchant|vendor)\b",
             "general", "product_issue",
             "User is requesting action against a third party — requires human agent action.",
         ),
@@ -97,8 +93,9 @@ class TriageAgent:
             "User is requesting removal of an employee from their account — requires human agent action.",
         ),
         # J. Complete product/service outage (all requests failing, everything down)
+        # NOTE: Must NOT match integration-specific issues (bedrock, api, endpoint)
         (
-            r"(stopped working completely|all requests?.{0,20}failing|completely.{0,20}(down|broken|stopped))"
+            r"(stopped working completely|completely.{0,20}(down|broken|stopped))"
             r"|"
             r"(everything.{0,20}(down|failing|broken)|none of.{0,20}(pages|requests).{0,20}(work|accessible))",
             "general_support", "bug",
@@ -228,11 +225,7 @@ class TriageAgent:
     def _call_llm(self, prompt: str, retries: int = 5) -> str:
         for attempt in range(retries):
             try:
-                result = self.llm.invoke(prompt)
-                content = result.content if result and result.content else ""
-                if not content.strip():
-                    raise ValueError("Empty LLM response")
-                return content
+                return self.llm.invoke(prompt)
             except Exception as exc:
                 if attempt < retries - 1:
                     wait = 15 * (2 ** attempt)

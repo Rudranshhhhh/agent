@@ -16,8 +16,11 @@ SAMPLE_CSV = PROJECT_ROOT / "support_tickets" / "sample_support_tickets.csv"
 OUTPUT_CSV = PROJECT_ROOT / "support_tickets" / "output.csv"
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")  # "groq", "gemini", or "nvidia"
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
-GROQ_TEMPERATURE = 0.0  # Deterministic where possible (§6.6)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "mistralai/mistral-medium-3.5-128b")
+LLM_TEMPERATURE = 0.0  # Deterministic where possible (§6.6)
 
 # ── Embeddings ───────────────────────────────────────────────────────────────
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"

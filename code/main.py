@@ -13,7 +13,6 @@ Usage:
 
 import argparse
 import concurrent.futures
-import os
 import sys
 import time
 from threading import Lock
@@ -21,10 +20,11 @@ from threading import Lock
 import pandas as pd
 from dotenv import load_dotenv
 
-from config import INPUT_CSV, SAMPLE_CSV, OUTPUT_CSV
+from config import INPUT_CSV, SAMPLE_CSV, OUTPUT_CSV, LLM_TEMPERATURE
 from indexer import build_or_load_index
 from retriever import CorpusRetriever
 from agent import TriageAgent
+from llm_provider import get_llm_provider
 
 
 def main():
@@ -42,28 +42,29 @@ def main():
         action="store_true",
         help="Force-rebuild the vector index from the corpus.",
     )
+    parser.add_argument(
+        "--provider",
+        type=str,
+        choices=["groq", "gemini", "nvidia"],
+        default=None,
+        help="LLM provider to use (overrides LLM_PROVIDER env var).",
+    )
     args = parser.parse_args()
 
     # ── Load environment ─────────────────────────────────────────────────
     load_dotenv()
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    if not groq_api_key:
-        print(
-            "ERROR: GROQ_API_KEY environment variable is not set.\n"
-            "Copy .env.example → .env and add your Groq API key.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    llm = get_llm_provider(provider=args.provider, temperature=LLM_TEMPERATURE)
 
     # ── Build / load index ───────────────────────────────────────────────
     print("=" * 60)
     print("  Support Triage Agent")
+    print(f"  LLM: {llm.name}")
     print("=" * 60)
     vectorstore = build_or_load_index(force_rebuild=args.reindex)
 
     # ── Initialise components ────────────────────────────────────────────
     retriever = CorpusRetriever(vectorstore)
-    agent = TriageAgent(retriever, groq_api_key=groq_api_key)
+    agent = TriageAgent(retriever, llm_provider=llm)
 
     # ── Load input CSV ───────────────────────────────────────────────────
     input_path = SAMPLE_CSV if args.sample else INPUT_CSV

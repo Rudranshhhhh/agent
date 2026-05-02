@@ -61,10 +61,13 @@ The user is asking support to DO something TO their specific account:
 - Any "please do X on my account" where the user cannot self-serve
 
 ### B. Financial / refund demands
-The user is demanding money back or payment correction:
-- "give me the refund", "refund me", "give me my money back"
+The user is EXPLICITLY demanding money back:
+- "give me the refund", "refund me", "give me my money back", "refund asap"
 - "I want a refund for my payment / order / subscription"
-- Specific order/transaction IDs where the user is asking for resolution
+
+Do NOT escalate if the user is simply asking for HELP with a payment issue
+or mentions an order ID without demanding a refund. If the corpus has
+relevant payment troubleshooting steps, REPLY with those.
 
 ### C. Action against a third party
 The user wants support to act against someone else:
@@ -80,10 +83,15 @@ The user wants support to act against someone else:
 ### F. Site-wide / product-wide outage (no self-service fix exists)
 - "none of the submissions across ANY challenges are working"
 - "site is down, none of the pages are accessible"
-- "all my requests to Claude are failing"
-- "Claude has stopped working completely"
-- "Resume Builder is Down"
+- "Claude has stopped working completely, ALL requests are failing"
 → request_type="bug"
+
+IMPORTANT distinctions (these are NOT outages — DO NOT escalate):
+- A SINGLE user reporting ONE feature not working → reply with troubleshooting
+- A specific integration failing (e.g. "requests to bedrock are failing") → reply with relevant docs
+- "Resume Builder is Down" from a single user → reply with how-to steps
+- "I can't see the Apply tab" → reply with basic UI troubleshooting
+- Only escalate as outage when it's clearly PLATFORM-WIDE (all users, all features)
 
 ### G. No relevant documentation in CONTEXT
 If the corpus has nothing useful → escalate.
@@ -100,6 +108,13 @@ Reply when the corpus explains a procedure the USER can follow themselves:
 - "How do I dispute a charge?" → reply with the documented dispute procedure
 - "How do I delete my account?" → reply with the documented steps
 - "How do I delete a conversation?" → reply with the documented steps
+
+### Troubleshooting / single-user issues
+- "I can't see the Apply tab" → reply (suggest refresh, clear cache, check navigation)
+- "Resume Builder is not working" → reply with how-to steps from corpus
+- "Requests to Claude via Bedrock are failing" → reply with region/model docs
+- "I had an issue with my payment" + order ID → reply with payment troubleshooting
+  (only escalate payments if user DEMANDS a refund explicitly)
 
 ### Lost/stolen card, fraud-reporting, identity theft
 - When the corpus provides the contact number or procedure → reply with it
